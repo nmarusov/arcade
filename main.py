@@ -140,6 +140,7 @@ class Bonus(MovingObject):
         )
         self.vx = 0
         self.vy = 100
+        self.cost = 10
 
     def draw(self, screen):
         self.surf.fill(self.COLOR)
@@ -254,6 +255,8 @@ class Game:
         self.enemies = []
 
         self.started = False
+        self.score = 0  # Счёт игры
+        self.lifes = 3
 
     def update(self):
         if not self.started:
@@ -311,6 +314,9 @@ class Game:
                 self.player.move_left()
             elif keys[pg.K_RIGHT]:
                 self.player.move_right()
+
+            if self.lifes == 0:
+                done = True
 
             self.update()
             self.draw()
