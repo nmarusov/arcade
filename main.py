@@ -87,7 +87,13 @@ class Brick:
 
     def draw(self, screen):
         if self.state:
-            self.surf.fill(self.COLOR)
+            if self.secret == 1:
+                self.surf.fill(pg.Color(255, 255, 255))
+            elif self.secret == 2:
+                self.surf.fill(pg.Color(30, 30, 30))
+            else:
+                self.surf.fill(self.COLOR)
+
             pg.draw.rect(
                 self.surf,
                 pg.Color(0, 0, 0),
@@ -123,6 +129,40 @@ class Wall:
             brick.draw(screen)
 
 
+class Bonus(MovingObject):
+    HEIGHT = 30
+    WIDTH = 30
+    COLOR = pg.Color(255, 255, 255)
+
+    def __init__(self, x, y) -> None:
+        super().__init__(
+            x - self.WIDTH // 2, y - self.HEIGHT // 2, self.WIDTH, self.HEIGHT
+        )
+        self.vx = 0
+        self.vy = 100
+
+    def draw(self, screen):
+        self.surf.fill(self.COLOR)
+        super().draw(screen)
+
+
+class Enemy(MovingObject):
+    HEIGHT = 30
+    WIDTH = 30
+    COLOR = pg.Color(30, 30, 30)
+
+    def __init__(self, x, y) -> None:
+        super().__init__(
+            x - self.WIDTH // 2, y - self.HEIGHT // 2, self.WIDTH, self.HEIGHT
+        )
+        self.vx = 0
+        self.vy = 100
+
+    def draw(self, screen):
+        self.surf.fill(self.COLOR)
+        super().draw(screen)
+
+
 class Ball(MovingObject):
     TOLERANCE = 10
 
@@ -135,7 +175,7 @@ class Ball(MovingObject):
         self.vx = 0
         self.vy = 0
 
-    def update(self, p: Player, w: Wall):
+    def update(self, p: Player, w: Wall, bonuses: list[Bonus], enemies: list[Enemy]):
         super().update()
 
         if self.rect.right >= SCREEN_WIDTH and self.vx > 0:
@@ -180,6 +220,11 @@ class Ball(MovingObject):
                     self.vx = -self.vx
 
                 brick.destroy()
+                if brick.secret == 1:
+                    bonuses.append(Bonus(brick.rect.centerx, brick.rect.centery))
+                elif brick.secret == 2:
+                    bonuses.append(Enemy(brick.rect.centerx, brick.rect.centery))
+
                 break
 
     def move_to(self, x, y):
@@ -191,14 +236,6 @@ class Ball(MovingObject):
         """
         self.rect.left = x
         self.rect.top = y
-
-
-class Bonus(MovingObject):
-    pass
-
-
-class Enemy(MovingObject):
-    pass
 
 
 class Game:
@@ -213,6 +250,9 @@ class Game:
         self.player = Player(SCREEN_WIDTH / 2)
         self.ball = Ball(SCREEN_WIDTH / 2, SCREEN_HEIGHT - Player.HEIGHT)
 
+        self.bonuses = []
+        self.enemies = []
+
         self.started = False
 
     def update(self):
@@ -223,7 +263,13 @@ class Game:
             )
 
         self.player.update()
-        self.ball.update(self.player, self.wall)
+        self.ball.update(self.player, self.wall, self.bonuses, self.enemies)
+
+        for bonus in self.bonuses:
+            bonus.update()
+
+        for enemy in self.enemies:
+            enemy.update()
 
     def draw(self):
         self.clear()
@@ -231,6 +277,12 @@ class Game:
         self.player.draw(self.screen)
         self.ball.draw(self.screen)
         self.wall.draw(self.screen)
+
+        for bonus in self.bonuses:
+            bonus.draw(self.screen)
+
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
 
         pg.display.flip()
 
